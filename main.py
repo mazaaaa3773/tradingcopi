@@ -1,45 +1,38 @@
 import os
-import sys
 import asyncio
 from telethon import TelegramClient, events
 from deep_translator import GoogleTranslator
 
-# Vérification des variables d'environnement
-api_id = os.getenv("API_ID")
-api_hash = os.getenv("API_HASH")
-
-if not api_id or not api_hash:
-    print("[ERREUR] API_ID ou API_HASH manquant ! Vérifie tes variables d'environnement.")
-    sys.exit(1)
-
-api_id = int(api_id)  # Convertir en entier
-api_hash = str(api_hash)
+# Récupération du BOT TOKEN depuis les variables d'environnement
+BOT_TOKEN = os.getenv("BOT_TOKEN")
+if not BOT_TOKEN:
+    print("[ERREUR] BOT_TOKEN manquant !")
+    exit(1)
 
 # Canal source et canal cible
 SOURCE_CHANNEL = "KZTrade08"
 TARGET_CHANNEL = "NexusSignelForex"
 
-client = TelegramClient("session", api_id, api_hash)
+# Initialisation du client Telethon uniquement avec le BOT TOKEN
+client = TelegramClient('bot_session', api_id=0, api_hash='', bot_token=BOT_TOKEN)
 
-async def translate_text(text):
+async def translate_text(text: str) -> str:
     """Traduit le texte en français"""
     try:
-        translated = GoogleTranslator(source='auto', target='fr').translate(text)
-        return translated
+        return GoogleTranslator(source='auto', target='fr').translate(text)
     except Exception as e:
         print(f"[ERREUR TRADUCTION] {e}")
-        return text  # Retourne le texte original en cas d'erreur
+        return text
 
 @client.on(events.NewMessage(chats=SOURCE_CHANNEL))
 async def handler(event):
     try:
-        # Texte à traduire
         original_text = event.message.message or ""
         translated_text = ""
         if original_text:
             translated_text = await asyncio.to_thread(translate_text, original_text)
 
-        # Si le message contient une photo
+        # Reposter la photo si présente
         if event.photo:
             await client.send_file(
                 TARGET_CHANNEL,
@@ -48,14 +41,11 @@ async def handler(event):
             )
             print(f"[PHOTO] Repostée avec légende: {translated_text[:50]}...")
         elif translated_text:
-            await client.send_message(
-                TARGET_CHANNEL,
-                translated_text
-            )
+            await client.send_message(TARGET_CHANNEL, translated_text)
             print(f"[TEXTE] Reposté: {translated_text[:50]}...")
     except Exception as e:
         print(f"[ERREUR MESSAGE] {e}")
 
-print("Le bot tourne 24/7…")
-client.start()
+print("Le bot tourne 24/7 avec BOT TOKEN…")
+client.start(bot_token=BOT_TOKEN)  # Obligatoire pour BOT, pas userbot
 client.run_until_disconnected()
