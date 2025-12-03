@@ -1,42 +1,54 @@
-from telethon import TelegramClient, events
-from googletrans import Translator
 import os
+from telethon import TelegramClient, events
+from deep_translator import GoogleTranslator
+import asyncio
 
-# Récupérer les identifiants depuis Railway (variables d'environnement)
-api_id = int(os.getenv("37953717"))
-api_hash = os.getenv("3795420c49e410851262efb2d859585e")
+# Récupérer les identifiants depuis les variables d'environnement
+api_id = int(os.getenv("API_ID"))
+api_hash = os.getenv("API_HASH")
 
-# Canal source (public)
+# Canal source et canal cible
 SOURCE_CHANNEL = "KZTrade08"
-
-# Canal cible (ton canal)
 TARGET_CHANNEL = "NexusSignelForex"
 
 client = TelegramClient("session", api_id, api_hash)
-translator = Translator()
+
+async def translate_text(text):
+    """Traduit le texte en français"""
+    try:
+        translated = GoogleTranslator(source='auto', target='fr').translate(text)
+        return translated
+    except Exception as e:
+        print(f"[ERREUR TRADUCTION] {e}")
+        return text  # Retourne le texte original en cas d'erreur
 
 @client.on(events.NewMessage(chats=SOURCE_CHANNEL))
 async def handler(event):
-    # Traduire le texte si présent
-    translated_text = ""
-    if event.message.message:
-        translated = translator.translate(event.message.message, dest='fr')
-        translated_text = translated.text
+    try:
+        # Texte à traduire
+        original_text = event.message.message or ""
+        translated_text = ""
+        if original_text:
+            translated_text = await asyncio.to_thread(translate_text, original_text)
 
-    # Reposter l'image brute si présente
-    if event.photo:
-        await client.send_file(
-            TARGET_CHANNEL,
-            event.photo,
-            caption=translated_text if translated_text else None
-        )
-    else:
-        # Texte seul
-        await client.send_message(
-            TARGET_CHANNEL,
-            translated_text
-        )
+        # Si le message contient une photo
+        if event.photo:
+            await client.send_file(
+                TARGET_CHANNEL,
+                event.photo,
+                caption=translated_text if translated_text else None
+            )
+            print(f"[PHOTO] Repostée avec légende: {translated_text[:50]}...")
+        elif translated_text:
+            await client.send_message(
+                TARGET_CHANNEL,
+                translated_text
+            )
+            print(f"[TEXTE] Reposté: {translated_text[:50]}...")
+    except Exception as e:
+        print(f"[ERREUR MESSAGE] {e}")
 
 print("Le bot tourne 24/7…")
 client.start()
 client.run_until_disconnected()
+
