@@ -4,8 +4,8 @@ from deep_translator import GoogleTranslator
 import asyncio
 
 # Récupérer les identifiants depuis les variables d'environnement
-api_id = int(os.getenv("API_ID"))
-api_hash = os.getenv("API_HASH")
+api_id = int(os.getenv("37953717"))
+api_hash = os.getenv("3795420c49e410851262efb2d859585e")
 
 # Canal source et canal cible
 SOURCE_CHANNEL = "KZTrade08"
