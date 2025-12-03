@@ -1,11 +1,19 @@
 import os
+import sys
+import asyncio
 from telethon import TelegramClient, events
 from deep_translator import GoogleTranslator
-import asyncio
 
-# Récupérer les identifiants depuis les variables d'environnement
-api_id = int(os.getenv("37953717"))
-api_hash = os.getenv("3795420c49e410851262efb2d859585e")
+# Vérification des variables d'environnement
+api_id = os.getenv("API_ID")
+api_hash = os.getenv("API_HASH")
+
+if not api_id or not api_hash:
+    print("[ERREUR] API_ID ou API_HASH manquant ! Vérifie tes variables d'environnement.")
+    sys.exit(1)
+
+api_id = int(api_id)  # Convertir en entier
+api_hash = str(api_hash)
 
 # Canal source et canal cible
 SOURCE_CHANNEL = "KZTrade08"
@@ -51,4 +59,3 @@ async def handler(event):
 print("Le bot tourne 24/7…")
 client.start()
 client.run_until_disconnected()
-
