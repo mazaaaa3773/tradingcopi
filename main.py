@@ -5,16 +5,19 @@ from deep_translator import GoogleTranslator
 
 # Récupération du BOT TOKEN depuis les variables d'environnement
 BOT_TOKEN = os.getenv("BOT_TOKEN")
-if not BOT_TOKEN:
-    print("[ERREUR] BOT_TOKEN manquant !")
+API_ID = int(os.getenv("API_ID", 0))       # à mettre depuis Telegram
+API_HASH = os.getenv("API_HASH", "")       # à mettre depuis Telegram
+
+if not BOT_TOKEN or not API_ID or not API_HASH:
+    print("[ERREUR] BOT_TOKEN, API_ID ou API_HASH manquant !")
     exit(1)
 
 # Canal source et canal cible
 SOURCE_CHANNEL = "KZTrade08"
 TARGET_CHANNEL = "NexusSignelForex"
 
-# Initialisation du client Telethon uniquement avec le BOT TOKEN
-client = TelegramClient('bot_session', api_id=0, api_hash='', bot_token=BOT_TOKEN)
+# Initialisation du client Telethon avec api_id et api_hash (obligatoire)
+client = TelegramClient('bot_session', API_ID, API_HASH)
 
 async def translate_text(text: str) -> str:
     """Traduit le texte en français"""
@@ -47,5 +50,5 @@ async def handler(event):
         print(f"[ERREUR MESSAGE] {e}")
 
 print("Le bot tourne 24/7 avec BOT TOKEN…")
-client.start(bot_token=BOT_TOKEN)  # Obligatoire pour BOT, pas userbot
+client.start(bot_token=BOT_TOKEN)  # DÉFINITIF pour les bots
 client.run_until_disconnected()
